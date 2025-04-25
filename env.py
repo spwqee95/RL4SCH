@@ -8,7 +8,7 @@ BIN_PATH = "xxxxxx"
 STATE_DIM = 13
 
 class SchedulerEnv(gym.Env):
-    """Gym wrapper around C++ scheduler (one-step-at-a-time REPL)."""
+    """Gym wrapper around sch(one-step-at-a-time REPL)."""
     metadata = {"render_modes": []}
 
     def __init__(self):
@@ -57,7 +57,7 @@ class SchedulerEnv(gym.Env):
         # 2) read next line's response
         reply = self._read_json_line()
         done   = bool(reply.get("done", False))
-        reward = float(reply["reward"])              # r_t = -ΔStep provided by sch
+        reward = float(reply["reward"])              # r_t = -ΔS provided by sch
         obs    = np.array(reply["state"], np.float32)
 
         info = {}
