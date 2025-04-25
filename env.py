@@ -5,6 +5,9 @@ from typing import Tuple
 STATE_DIM = 13       
 EXEC      = "xxx" 
 
+# python3 -m venv venv
+# source venv/bin/activate
+
 class SchedulerEnv(gym.Env):
     """Gym wrapper  ↔  line-based JSON REPL scheduler"""
     metadata = {"render_modes": []}
