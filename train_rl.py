@@ -3,6 +3,15 @@ from stable_baselines3 import PPO
 from scheduler_env import SchedulerEnv
 from network import MLPExtractor
 
+# python train_rl.py \
+#   --steps-per-update 2048 \
+#   --max-env-steps 10000000 \
+#   --save-name ppo_box_rl_v1
+
+# python train_rl.py \
+#   --resume-from ppo_box_rl_v1.zip \
+#   --save-name ppo_box_rl_v2
+
 def parse_args():
     p = argparse.ArgumentParser()
     p.add_argument('--steps-per-update', type=int, default=2048,
