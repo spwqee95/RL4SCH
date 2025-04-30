@@ -1,4 +1,4 @@
-"""Gym‑style environment that wraps the (fake) FPGA scheduler binary.
+"""Gym‑style environment that wraps the fake scheduler binary.
 The scheduler communicates via JSON lines on stdin/stdout.
 Each reset() spawns a **new** process so that one complete traversal of the
 netlist is exactly one RL episode.
