@@ -1,4 +1,4 @@
-"""Training script
+"""Training script for the RL
 
 Usage example
 -------------
@@ -8,7 +8,7 @@ $ python train_rl.py --episodes 200 \
                      --save-name a2c_fclk_rl
 
 After each episode the script prints reward statistics and after training
-it writes *<save‑name>.pt* (model parameters) and *learning_curve.png*.
+it writes *<save-name>.pt* (model parameters) and *learning_curve.png*.
 """
 from __future__ import annotations
 
@@ -62,7 +62,7 @@ def a2c_update(model: PolicyNet, optimizer: Adam, buffer: Buffer,
                ent_coef: float = 0.01):
     obs, actions, old_logprobs, rewards, dones, values = buffer.to_tensor()
 
-    # Compute returns (bootstrapped GAE‑λ with λ=1 → REINFORCE‑with‑baseline)
+    # Compute returns (bootstrapped GAE-λ with λ=1 → REINFORCE-with-baseline)
     returns = torch.zeros_like(rewards)
     G = 0.0
     for t in reversed(range(len(rewards))):
@@ -71,7 +71,7 @@ def a2c_update(model: PolicyNet, optimizer: Adam, buffer: Buffer,
     returns = returns.detach()
     advantages = returns - values.squeeze()
 
-    # New log‑probs & state values
+    # New log-probs & state values
     log_probs, entropy, state_values = model.evaluate_actions(obs, actions)
 
     policy_loss = -(advantages.detach() * log_probs).mean()
@@ -102,6 +102,7 @@ def train(args):
 
     episode_rewards: List[float] = []
     relocation_freq: List[float] = []
+    final_max_steps: List[float] = []
 
     buffer = Buffer()
     global_step = 0
@@ -111,6 +112,7 @@ def train(args):
         done = False
         ep_reward = 0.0
         relocations = 0
+        final_max_step = None
 
         while not done:
             obs_t = torch.from_numpy(obs).float().to(DEVICE)
@@ -131,14 +133,17 @@ def train(args):
             obs = next_obs
             global_step += 1
 
-            # Optimise when enough samples collected or at episode end
+            if done:
+                final_max_step = info.get("final_max_step", None)
+
             if len(buffer.rewards) >= args.steps_per_update or done:
                 a2c_update(model, optimizer, buffer)
                 buffer.clear()
 
         episode_rewards.append(ep_reward)
         relocation_freq.append(relocations)
-        print(f"Episode {ep:>4}/{args.episodes} | reward = {ep_reward:8.2f} | reloc = {relocations:4d}")
+        final_max_steps.append(final_max_step if final_max_step is not None else 0.0)
+        print(f"Episode {ep:>4}/{args.episodes} | reward = {ep_reward:8.2f} | reloc = {relocations:4d} | max_step = {final_max_step}")
 
     # ------------------------------------------------------------------
     # Save artefacts
@@ -149,14 +154,18 @@ def train(args):
     print(f"[INFO] Model parameters saved to {model_path}")
 
     # Learning curve
-    plt.figure(figsize=(10, 5))
+    plt.figure(figsize=(10, 6))
     plt.subplot(211)
-    plt.plot(episode_rewards)
-    plt.title("Episode return")
+    plt.plot(final_max_steps)
+    plt.title("Final Max Step per Episode")
+    plt.ylabel("Max Step")
+
     plt.subplot(212)
     plt.plot(relocation_freq)
     plt.title("Relocation count per episode")
+    plt.ylabel("#Relocations")
     plt.tight_layout()
+
     curve_path = Path("learning_curve.png")
     plt.savefig(curve_path)
     print(f"[INFO] Learning curve saved to {curve_path}")
@@ -165,7 +174,7 @@ def train(args):
 
 
 # ----------------------------------------------------------------------
-# Entry‑point
+# Entry-point
 # ----------------------------------------------------------------------
 
 def parse_args():
